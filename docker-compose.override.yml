@@ -1,0 +1,42 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin123
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db          # Persistent Storage
+    networks:
+      - airflow                      # Docker Networking
+    labels:
+      project: "currency-etl"
+      description: "MongoDB primary database"
+      networking: "airflow bridge network, reachable via hostname 'mongo'"
+      storage: "named volume mongo_data mounted at /data/db"
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mongo-express
+    restart: on-failure
+    depends_on:
+      - mongo
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://admin:admin123@mongo:27017/
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: admin123
+    ports:
+      - "8081:8081"
+    networks:
+      - airflow                      # Docker Networking
+    labels:
+      project: "currency-etl"
+      description: "Mongo Express web admin UI"
+      networking: "airflow bridge network, connects to mongo:27017"
+
+volumes:
+  mongo_data:                        # Persistent Storage
+    driver: local
